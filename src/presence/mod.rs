@@ -1,7 +1,12 @@
 use serde::{Deserialize, Serialize};
+
 use crate::{Client, RoboatError};
+use crate::presence::request_types::{GetPresenceReqBody, GetPresenceResponse};
+
+mod request_types;
 
 const REGISTER_PRESENCE_API: &str = "https://presence.roblox.com/v1/presence/register-app-presence";
+const GET_PRESENCE_API: &str = "https://presence.roblox.com/v1/presence/users";
 
 /// Presence of user
 #[allow(missing_docs)]
@@ -28,6 +33,20 @@ impl TryFrom<i32> for PresenceType {
             _ => Err(RoboatError::MalformedResponse)
         }
     }
+}
+
+/// Model, representing a User Presence
+#[allow(missing_docs)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize)]
+pub struct UserPresence {
+    pub user_id: u64,
+    pub presence_type: PresenceType,
+    pub last_online: String,
+    pub last_location: String,
+
+    pub place_id: Option<u64>,
+    pub game_id: Option<u64>,
+    pub universe_id: Option<u64>,
 }
 
 // TODO: add method for fetching users' presence
@@ -79,12 +98,74 @@ impl Client {
             },
         }
     }
+
+    /// Gets presence of users using <https://presence.roblox.com/v1/presence/users>
+    ///
+    /// # Notes
+    /// * Does not require a valid roblosecurity.
+    ///
+    /// # Errors
+    /// * All errors under [Standard Errors](#standard-errors).
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use roboat::ClientBuilder;
+    ///
+    /// const ROBLOSECURITY: &str = "roblosecurity";
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = ClientBuilder::new().roblosecurity(ROBLOSECURITY.to_string()).build();
+    ///
+    /// match client.register_presence().await {
+    ///    Ok(_) => println!("Successfully registered presence!"),
+    ///    Err(e) => println!("Error: {}", e),
+    /// }
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn get_presence(&self, user_ids: Vec<u64>) -> Result<Vec<UserPresence>, RoboatError> {
+        let body = GetPresenceReqBody {
+            user_ids,
+        };
+
+        let request_result = self
+            .reqwest_client
+            .post(GET_PRESENCE_API)
+            .json(&body)
+            .send()
+            .await;
+
+        let response = Self::validate_request_result(request_result).await?;
+        let raw = Self::parse_to_raw::<GetPresenceResponse>(response).await?;
+
+        let mut presences = Vec::new();
+
+        for user_presence in raw.user_presences {
+            presences.push(
+                UserPresence {
+                    user_id: user_presence.user_id,
+                    presence_type: PresenceType::try_from(user_presence.user_presence_type)
+                        .map_err(|_| RoboatError::MalformedResponse)?,
+                    last_online: user_presence.last_online,
+                    last_location: user_presence.last_location,
+                    place_id: user_presence.place_id,
+                    game_id: user_presence.game_id,
+                    universe_id: user_presence.universe_id,
+                }
+            );
+        }
+
+        Ok(presences)
+    }
 }
 
 mod internal {
-    use super::REGISTER_PRESENCE_API;
-    use crate::{Client, RoboatError, XCSRF_HEADER};
     use reqwest::header;
+
+    use crate::{Client, RoboatError, XCSRF_HEADER};
+    use super::REGISTER_PRESENCE_API;
 
     impl Client {
         pub(super) async fn register_presence_internal(&self) -> Result<(), RoboatError> {
