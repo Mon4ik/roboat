@@ -238,6 +238,9 @@ pub mod trades;
 pub mod users;
 /// A module for endpoints prefixed with <https://friends.roblox.com/*>.
 pub mod friends;
+/// A module for endpoints prefixed with <https://apis.roblox.com/discovery-api/*>.
+pub mod discovery;
+
 /// A module related to validating requests.
 mod validation;
 // todo: figure out authtickets

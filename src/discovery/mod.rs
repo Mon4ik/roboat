@@ -1,0 +1,190 @@
+use serde::{Deserialize, Serialize};
+
+use crate::{Client, RoboatError};
+
+mod request_types;
+
+const OMNI_RECOMMENDATIONS_API: &str = "https://apis.roblox.com/discovery-api/omni-recommendation";
+
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize)]
+pub enum TreatmentType {
+    /// Carousel of friends
+    #[default]
+    FriendCarousel,
+
+    /// Carousel (wide cards 16:9)
+    Carousel,
+
+    /// Grid (square cards)
+    SortlessGrid,
+}
+
+impl TryFrom<String> for TreatmentType {
+    type Error = RoboatError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.as_str() {
+            "FriendCarousel" => Ok(Self::FriendCarousel),
+            "Carousel" => Ok(Self::Carousel),
+            "SortlessGrid" => Ok(Self::SortlessGrid),
+            _ => Err(RoboatError::MalformedResponse)
+        }
+    }
+}
+
+#[allow(missing_docs)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize)]
+pub struct RecommendationsTopic {
+    /// Topic id
+    #[serde(alias = "topicId")]
+    pub topic_id: u64,
+
+    /// Topic / Title
+    pub topic: Option<String>,
+
+    /// Subtitle
+    pub subtitle: Option<String>,
+
+    /// Type of topic
+    ///
+    /// Can be:
+    ///  - "FriendCarousel" (friends),
+    ///  - "Carousel" (wide cards),
+    ///  - "SortlessGrid" (grid of small square cards)
+    pub treatment_type: TreatmentType,
+
+    /// Array of recommendations
+    pub recommendation_list: Vec<Recommendation>,
+}
+
+#[allow(missing_docs)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize)]
+pub struct Recommendation {
+    pub universe_id: u64,
+    pub name: String,
+    pub description: Option<String>,
+
+    pub total_up_votes: u64,
+    pub total_down_votes: u64,
+    pub player_count: usize,
+}
+
+impl Client {
+    /// Gets sections from Home using <https://apis.roblox.com/discovery-api/omni-recommendation>.
+    ///
+    /// # Notes
+    /// * Requires a valid roblosecurity.
+    ///
+    /// # Errors
+    /// * All errors under [Standard Errors](#standard-errors).
+    /// * All errors under [Auth Required Errors](#auth-required-errors).
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use roboat::ClientBuilder;
+    ///
+    /// const ROBLOSECURITY: &str = "roblosecurity";
+    /// const KEYWORD: &str = "linkmon";
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = ClientBuilder::new().roblosecurity(ROBLOSECURITY.to_string()).build();
+    ///
+    /// let keyword = KEYWORD.to_string();
+    /// let users = client.user_search(keyword).await?;
+    ///
+    /// println!("Found {} users.", users.len());
+    ///
+    /// for user in users {
+    ///     println!("{}: {}", user.username, user.user_id);
+    /// }
+    ///
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn omni_recommendations(&self) -> Result<Vec<RecommendationsTopic>, RoboatError> {
+        match self.omni_recommendations_internal().await {
+            Ok(x) => Ok(x),
+            Err(e) => match e {
+                RoboatError::InvalidXcsrf(new_xcsrf) => {
+                    self.set_xcsrf(new_xcsrf).await;
+
+                    self.omni_recommendations_internal().await
+                }
+                _ => Err(e),
+            },
+        }
+    }
+}
+
+mod internal {
+    use reqwest::header;
+
+    use crate::{Client, RoboatError, XCSRF_HEADER};
+    use crate::discovery::request_types::OmniRecommendationsResponse;
+
+    use super::{OMNI_RECOMMENDATIONS_API, Recommendation, RecommendationsTopic, TreatmentType};
+
+    impl Client {
+        pub(super) async fn omni_recommendations_internal(&self) -> Result<Vec<RecommendationsTopic>, RoboatError> {
+            let cookie = self.cookie_string()?;
+
+            let body = serde_json::json!({
+                "pageType": "Home",
+                "sessionId": "fbf5b8ae-3b7e-4cc6-b387-324743f04036"
+            });
+
+            let request_result = self
+                .reqwest_client
+                .post(OMNI_RECOMMENDATIONS_API)
+                .header(header::COOKIE, cookie)
+                .header(XCSRF_HEADER, self.xcsrf().await)
+                .json(&body)
+                .send()
+                .await;
+
+            let response = Self::validate_request_result(request_result).await?;
+            let raw = Self::parse_to_raw::<OmniRecommendationsResponse>(response).await?;
+
+            let mut topics = Vec::new();
+
+            for raw_topic in raw.sorts {
+                let mut recommendation_list = Vec::new();
+
+                for raw_recommend in raw_topic.recommendation_list {
+                    let metadata = raw.content_metadata.game
+                        .get(&raw_recommend.content_id.to_string())
+                        .ok_or(RoboatError::MalformedResponse)?;
+
+                    recommendation_list.push(
+                        Recommendation {
+                            universe_id: metadata.universe_id,
+                            name: metadata.name.clone(),
+                            description: metadata.description.clone(),
+                            total_up_votes: metadata.total_up_votes,
+                            total_down_votes: metadata.total_down_votes,
+                            player_count: metadata.player_count,
+                        }
+                    )
+                }
+
+                topics.push(
+                    RecommendationsTopic {
+                        topic_id: raw_topic.topic_id,
+                        topic: raw_topic.topic,
+                        subtitle: raw_topic.subtitle,
+                        treatment_type: TreatmentType::try_from(raw_topic.treatment_type)?,
+                        recommendation_list,
+                    }
+                )
+            }
+
+            // raw.sorts
+
+            // We don't care about the response, just that it's a status code 200.
+            Ok(topics)
+        }
+    }
+}
