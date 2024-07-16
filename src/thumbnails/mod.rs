@@ -54,6 +54,8 @@ pub enum ThumbnailType {
     AvatarHeadshot,
     #[default]
     Asset,
+    GameIcon,
+    GameThumbnail
 }
 
 impl fmt::Display for ThumbnailSize {
@@ -305,6 +307,8 @@ fn generate_format(thumbnail_type: ThumbnailType) -> Option<String> {
         ThumbnailType::Avatar => None::<String>,
         ThumbnailType::AvatarHeadshot => None::<String>,
         ThumbnailType::Asset => Some("png".to_string()),
+        ThumbnailType::GameIcon => Some("webp".to_string()),
+        ThumbnailType::GameThumbnail => Some("webp".to_string()),
     }
 }
 
@@ -313,5 +317,7 @@ fn generate_thumbnail_type_string(thumbnail_type: ThumbnailType) -> String {
         ThumbnailType::Avatar => "Avatar".to_string(),
         ThumbnailType::AvatarHeadshot => "AvatarHeadShot".to_string(),
         ThumbnailType::Asset => "Asset".to_string(),
+        ThumbnailType::GameIcon => "GameIcon".to_string(),
+        ThumbnailType::GameThumbnail => "GameThumbnail".to_string(),
     }
 }
