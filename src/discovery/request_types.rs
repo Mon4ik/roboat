@@ -65,6 +65,7 @@ pub struct RecommendationsContentMetadataRaw {
 #[serde(rename_all = "camelCase")]
 pub struct GameContentMetadataRaw {
     pub universe_id: u64,
+    pub root_place_id: u64,
     pub name: String,
     pub description: Option<String>,
 

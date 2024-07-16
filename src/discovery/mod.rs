@@ -62,6 +62,8 @@ pub struct RecommendationsTopic {
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize)]
 pub struct Recommendation {
     pub universe_id: u64,
+    pub root_place_id: u64,
+
     pub name: String,
     pub description: Option<String>,
 
@@ -161,6 +163,7 @@ mod internal {
                     recommendation_list.push(
                         Recommendation {
                             universe_id: metadata.universe_id,
+                            root_place_id: metadata.root_place_id,
                             name: metadata.name.clone(),
                             description: metadata.description.clone(),
                             total_up_votes: metadata.total_up_votes,
