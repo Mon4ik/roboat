@@ -1,6 +1,8 @@
-use crate::{Client, RoboatError};
-use serde::{Deserialize, Serialize};
 use std::fmt;
+
+use serde::{Deserialize, Serialize};
+
+use crate::{Client, RoboatError};
 
 mod request_types;
 
@@ -289,13 +291,13 @@ fn generate_request_id_string(
     id: u64,
     size: ThumbnailSize,
 ) -> String {
-    match thumbnail_type {
-        ThumbnailType::Avatar => format!("{}:undefined:Avatar:{}:null:regular", id, size),
-        ThumbnailType::AvatarHeadshot => {
-            format!("{}:undefined:AvatarHeadshot:{}:null:regular", id, size)
-        }
-        ThumbnailType::Asset => format!("{}::Asset:{}:png:regular", id, size),
-    }
+    format!(
+        "{}::{}:{}:{}:regular",
+        id,
+        generate_thumbnail_type_string(thumbnail_type),
+        size,
+        generate_format(thumbnail_type).unwrap_or("null".to_string())
+    )
 }
 
 fn generate_format(thumbnail_type: ThumbnailType) -> Option<String> {
