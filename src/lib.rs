@@ -240,7 +240,8 @@ pub mod users;
 pub mod friends;
 /// A module for endpoints prefixed with <https://apis.roblox.com/discovery-api/*>.
 pub mod discovery;
-
+/// A module for endpoints prefixed with <https://games.roblox.com/*>.
+pub mod games;
 /// A module related to validating requests.
 mod validation;
 // todo: figure out authtickets
