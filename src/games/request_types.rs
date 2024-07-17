@@ -59,3 +59,26 @@ pub struct GameCreatorRaw {
 
     pub has_verified_badge: bool,
 }
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlaceDetailsRaw {
+    pub place_id: u64,
+    pub name: String,
+    pub description: String,
+    pub source_name: String,
+    pub source_description: String,
+    pub url: String,
+
+    pub is_playable: bool,
+    pub reason_prohibited: String,
+    pub price: i32,
+    pub image_token: String,
+
+    pub builder: String,
+    pub builder_id: u64,
+    pub has_verified_badge: bool,
+
+    pub universe_id: u64,
+    pub universe_root_place_id: u64,
+}
