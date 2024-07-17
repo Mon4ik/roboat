@@ -6,7 +6,6 @@ mod request_types;
 
 const OMNI_RECOMMENDATIONS_API: &str = "https://apis.roblox.com/discovery-api/omni-recommendation";
 
-
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize)]
 pub enum TreatmentType {
     /// Carousel of friends
@@ -28,7 +27,7 @@ impl TryFrom<String> for TreatmentType {
             "FriendCarousel" => Ok(Self::FriendCarousel),
             "Carousel" => Ok(Self::Carousel),
             "SortlessGrid" => Ok(Self::SortlessGrid),
-            _ => Err(RoboatError::MalformedResponse)
+            _ => Err(RoboatError::MalformedResponse),
         }
     }
 }
@@ -124,13 +123,15 @@ impl Client {
 mod internal {
     use reqwest::header;
 
-    use crate::{Client, RoboatError, XCSRF_HEADER};
     use crate::discovery::request_types::OmniRecommendationsResponse;
+    use crate::{Client, RoboatError, XCSRF_HEADER};
 
-    use super::{OMNI_RECOMMENDATIONS_API, Recommendation, RecommendationsTopic, TreatmentType};
+    use super::{Recommendation, RecommendationsTopic, TreatmentType, OMNI_RECOMMENDATIONS_API};
 
     impl Client {
-        pub(super) async fn omni_recommendations_internal(&self) -> Result<Vec<RecommendationsTopic>, RoboatError> {
+        pub(super) async fn omni_recommendations_internal(
+            &self,
+        ) -> Result<Vec<RecommendationsTopic>, RoboatError> {
             let cookie = self.cookie_string()?;
 
             let body = serde_json::json!({
@@ -156,32 +157,30 @@ mod internal {
                 let mut recommendation_list = Vec::new();
 
                 for raw_recommend in raw_topic.recommendation_list {
-                    let metadata = raw.content_metadata.game
+                    let metadata = raw
+                        .content_metadata
+                        .game
                         .get(&raw_recommend.content_id.to_string())
                         .ok_or(RoboatError::MalformedResponse)?;
 
-                    recommendation_list.push(
-                        Recommendation {
-                            universe_id: metadata.universe_id,
-                            root_place_id: metadata.root_place_id,
-                            name: metadata.name.clone(),
-                            description: metadata.description.clone(),
-                            total_up_votes: metadata.total_up_votes,
-                            total_down_votes: metadata.total_down_votes,
-                            player_count: metadata.player_count,
-                        }
-                    )
+                    recommendation_list.push(Recommendation {
+                        universe_id: metadata.universe_id,
+                        root_place_id: metadata.root_place_id,
+                        name: metadata.name.clone(),
+                        description: metadata.description.clone(),
+                        total_up_votes: metadata.total_up_votes,
+                        total_down_votes: metadata.total_down_votes,
+                        player_count: metadata.player_count,
+                    })
                 }
 
-                topics.push(
-                    RecommendationsTopic {
-                        topic_id: raw_topic.topic_id,
-                        topic: raw_topic.topic,
-                        subtitle: raw_topic.subtitle,
-                        treatment_type: TreatmentType::try_from(raw_topic.treatment_type)?,
-                        recommendation_list,
-                    }
-                )
+                topics.push(RecommendationsTopic {
+                    topic_id: raw_topic.topic_id,
+                    topic: raw_topic.topic,
+                    subtitle: raw_topic.subtitle,
+                    treatment_type: TreatmentType::try_from(raw_topic.treatment_type)?,
+                    recommendation_list,
+                })
             }
 
             // raw.sorts

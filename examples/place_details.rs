@@ -1,7 +1,7 @@
 use clap::Parser;
 
-use roboat::ClientBuilder;
 use roboat::presence::PresenceType;
+use roboat::ClientBuilder;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -19,9 +19,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .roblosecurity(args.roblosecurity)
         .build();
 
-    let place_details = client
-        .place_details(args.place_id)
-        .await?;
+    let place_details = client.place_details(args.place_id).await?;
 
     println!("{}", place_details.source_name);
 

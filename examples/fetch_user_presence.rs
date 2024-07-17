@@ -1,6 +1,6 @@
 use clap::Parser;
-use roboat::{ClientBuilder, Limit};
 use roboat::presence::PresenceType;
+use roboat::{ClientBuilder, Limit};
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -17,11 +17,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let details = client.user_details(args.user_id).await?;
     let presence_raw = client.get_presence(vec![args.user_id]).await?;
 
-    let presence = presence_raw
-        .first()
-        .expect("User not found.");
+    let presence = presence_raw.first().expect("User not found.");
 
-    println!("Presence of {} (@{})", details.display_name, details.username);
+    println!(
+        "Presence of {} (@{})",
+        details.display_name, details.username
+    );
     println!(" > Currently: {:?}", presence.presence_type);
 
     if presence.presence_type == PresenceType::InGame {

@@ -1,11 +1,11 @@
 use clap::Parser;
-use roboat::ClientBuilder;
 use roboat::discovery::TreatmentType;
+use roboat::ClientBuilder;
 
 #[derive(Parser, Debug)]
 struct Args {
     #[arg(long, short)]
-    roblosecurity: String
+    roblosecurity: String,
 }
 
 #[tokio::main]
@@ -34,7 +34,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!(" * there's should be carousel of friends *")
         } else {
             for recommendation in topic.recommendation_list {
-                println!(" • {} – {} ppl.", recommendation.name, recommendation.player_count);
+                println!(
+                    " • {} – {} ppl.",
+                    recommendation.name, recommendation.player_count
+                );
             }
         }
     }

@@ -1,6 +1,5 @@
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
-use serde_json::Map;
+use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -35,9 +34,7 @@ pub struct RecommendationsTopicRaw {
     pub recommendation_list: Vec<RecommendationRaw>,
 
     // pub next_page_token_for_topic: null,
-
     pub number_of_rows: i32,
-
     // pub topic_layout_data: {}
 }
 

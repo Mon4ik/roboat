@@ -1,7 +1,7 @@
 use clap::Parser;
 
-use roboat::ClientBuilder;
 use roboat::presence::PresenceType;
+use roboat::ClientBuilder;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -12,12 +12,9 @@ struct Args {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
-    let client = ClientBuilder::new()
-        .build();
+    let client = ClientBuilder::new().build();
 
-    let game_details = client
-        .game_details(args.universe_id)
-        .await?;
+    let game_details = client.game_details(args.universe_id).await?;
 
     println!("{}", game_details.source_name);
 

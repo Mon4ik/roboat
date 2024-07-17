@@ -55,7 +55,7 @@ pub enum ThumbnailType {
     #[default]
     Asset,
     GameIcon,
-    GameThumbnail
+    GameThumbnail,
 }
 
 impl fmt::Display for ThumbnailSize {
