@@ -19,7 +19,7 @@
 //!   - Purchase Non-Tradable Limited - [`Client::purchase_non_tradable_limited`]
 //! * Catalog API
 //!   - Fetch Item Details - [`Client::item_details`]
-//!   - Fetch Product ID - [`Client::product_id`]  
+//!   - Fetch Product ID - [`Client::product_id`]
 //!   - Fetch Product ID Bulk - [`Client::product_id_bulk`]
 //!   - Fetch Collectible Item ID - [`Client::collectible_item_id`]
 //!   - Fetch Collectible Item ID Bulk - [`Client::collectible_item_id_bulk`]
@@ -111,7 +111,7 @@
 //!
 //!     println!("Purchased item {} for {} robux!", ITEM_ID, PRICE);
 //!
-//!     Ok(())   
+//!     Ok(())
 //! }
 //! ```
 //!
@@ -132,14 +132,14 @@
 //!     let robux = client.robux().await?;
 //!     let user_id = client.user_id().await?;
 //!     let username = client.username().await?;
-//!     let display_name = client.display_name().await?;    
+//!     let display_name = client.display_name().await?;
 //!
 //!     println!("Robux: {}", robux);
 //!     println!("User ID: {}", user_id);
 //!     println!("Username: {}", username);
 //!     println!("Display Name: {}", display_name);
 //!
-//!     Ok(())   
+//!     Ok(())
 //! }
 //! ```
 //!
@@ -164,9 +164,9 @@
 //!
 //!     let (resellers, _) = client.resellers(item_id, limit, cursor).await?;
 //!
-//!     println!("Lowest Price for Valkyrie Helm: {}", resellers[0].price);  
+//!     println!("Lowest Price for Valkyrie Helm: {}", resellers[0].price);
 //!
-//!     Ok(())   
+//!     Ok(())
 //! }
 //! ```
 //!
@@ -198,7 +198,7 @@
 //!     println!("Creator Name: {}", creator_name);
 //!     println!("Price: {}", price);
 //!
-//!     Ok(())   
+//!     Ok(())
 //! }
 //! ```
 
@@ -222,8 +222,16 @@ pub mod catalog;
 mod chat;
 /// A module related to the [`Client`] struct.
 mod client;
+/// A module for endpoints prefixed with <https://apis.roblox.com/discovery-api/*>.
+pub mod discovery;
 /// A module for endpoints prefixed with <https://economy.roblox.com/*>.
 pub mod economy;
+/// A module for endpoints prefixed with <https://friends.roblox.com/*>.
+pub mod friends;
+/// A module for endpoints prefixed with <https://friends.roblox.com/*>.
+pub mod friends;
+/// A module for endpoints prefixed with <https://games.roblox.com/*>.
+pub mod games;
 /// A module for endpoints prefixed with <https://groups.roblox.com/*>.
 pub mod groups;
 /// A module for endpoints prefixed with <https://presence.roblox.com/*>.
@@ -236,12 +244,6 @@ pub mod thumbnails;
 pub mod trades;
 /// A module for endpoints prefixed with <https://users.roblox.com/*>.
 pub mod users;
-/// A module for endpoints prefixed with <https://friends.roblox.com/*>.
-pub mod friends;
-/// A module for endpoints prefixed with <https://apis.roblox.com/discovery-api/*>.
-pub mod discovery;
-/// A module for endpoints prefixed with <https://games.roblox.com/*>.
-pub mod games;
 /// A module related to validating requests.
 mod validation;
 // todo: figure out authtickets

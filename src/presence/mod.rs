@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{Client, RoboatError};
 use crate::presence::request_types::{GetPresenceReqBody, GetPresenceResponse};
+use crate::{Client, RoboatError};
 
 mod request_types;
 
@@ -30,7 +30,7 @@ impl TryFrom<i32> for PresenceType {
             2 => Ok(Self::InGame),
             3 => Ok(Self::InStudio),
             4 => Ok(Self::Invisible),
-            _ => Err(RoboatError::MalformedResponse)
+            _ => Err(RoboatError::MalformedResponse),
         }
     }
 }
@@ -126,9 +126,7 @@ impl Client {
     /// # }
     /// ```
     pub async fn get_presence(&self, user_ids: Vec<u64>) -> Result<Vec<UserPresence>, RoboatError> {
-        let body = GetPresenceReqBody {
-            user_ids,
-        };
+        let body = GetPresenceReqBody { user_ids };
 
         let request_result = self
             .reqwest_client
@@ -143,18 +141,16 @@ impl Client {
         let mut presences = Vec::new();
 
         for user_presence in raw.user_presences {
-            presences.push(
-                UserPresence {
-                    user_id: user_presence.user_id,
-                    presence_type: PresenceType::try_from(user_presence.user_presence_type)
-                        .map_err(|_| RoboatError::MalformedResponse)?,
-                    last_online: user_presence.last_online,
-                    last_location: user_presence.last_location,
-                    place_id: user_presence.place_id,
-                    game_id: user_presence.game_id,
-                    universe_id: user_presence.universe_id,
-                }
-            );
+            presences.push(UserPresence {
+                user_id: user_presence.user_id,
+                presence_type: PresenceType::try_from(user_presence.user_presence_type)
+                    .map_err(|_| RoboatError::MalformedResponse)?,
+                last_online: user_presence.last_online,
+                last_location: user_presence.last_location,
+                place_id: user_presence.place_id,
+                game_id: user_presence.game_id,
+                universe_id: user_presence.universe_id,
+            });
         }
 
         Ok(presences)
@@ -164,8 +160,8 @@ impl Client {
 mod internal {
     use reqwest::header;
 
-    use crate::{Client, RoboatError, XCSRF_HEADER};
     use super::REGISTER_PRESENCE_API;
+    use crate::{Client, RoboatError, XCSRF_HEADER};
 
     impl Client {
         pub(super) async fn register_presence_internal(&self) -> Result<(), RoboatError> {
