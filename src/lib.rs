@@ -228,8 +228,6 @@ pub mod discovery;
 pub mod economy;
 /// A module for endpoints prefixed with <https://friends.roblox.com/*>.
 pub mod friends;
-/// A module for endpoints prefixed with <https://friends.roblox.com/*>.
-pub mod friends;
 /// A module for endpoints prefixed with <https://games.roblox.com/*>.
 pub mod games;
 /// A module for endpoints prefixed with <https://groups.roblox.com/*>.

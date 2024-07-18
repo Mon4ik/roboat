@@ -1,3 +1,4 @@
+use reqwest::header::{self, HeaderValue};
 use serde::{Deserialize, Serialize};
 
 use crate::presence::request_types::{GetPresenceReqBody, GetPresenceResponse};
@@ -45,7 +46,7 @@ pub struct UserPresence {
     pub last_location: String,
 
     pub place_id: Option<u64>,
-    pub game_id: Option<u64>,
+    pub game_id: Option<String>,
     pub universe_id: Option<u64>,
 }
 
@@ -103,6 +104,7 @@ impl Client {
     ///
     /// # Notes
     /// * Does not require a valid roblosecurity.
+    /// * But if provided valid roblosecurity, you can access to peoples' presences, restricted due privacy
     ///
     /// # Errors
     /// * All errors under [Standard Errors](#standard-errors).
@@ -126,12 +128,14 @@ impl Client {
     /// # }
     /// ```
     pub async fn get_presence(&self, user_ids: Vec<u64>) -> Result<Vec<UserPresence>, RoboatError> {
+        let cookie = self.cookie_string().unwrap_or(HeaderValue::from_static(""));
         let body = GetPresenceReqBody { user_ids };
 
         let request_result = self
             .reqwest_client
             .post(GET_PRESENCE_API)
             .json(&body)
+            .header(header::COOKIE, cookie)
             .send()
             .await;
 

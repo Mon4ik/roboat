@@ -21,6 +21,6 @@ pub(super) struct UserPresenceRaw {
     pub last_location: String,
 
     pub place_id: Option<u64>,
-    pub game_id: Option<u64>,
+    pub game_id: Option<String>,
     pub universe_id: Option<u64>,
 }
