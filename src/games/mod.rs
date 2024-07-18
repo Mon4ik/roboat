@@ -1,3 +1,4 @@
+use request_types::GameMediaResponse;
 use reqwest::header;
 use reqwest::header::HeaderValue;
 use serde::{Deserialize, Serialize};
@@ -10,6 +11,8 @@ mod request_types;
 const GAMES_DETAILS_API: &str = "https://games.roblox.com/v1/games?universeIds={universe_ids}";
 const PLACE_DETAILS_API: &str =
     "https://games.roblox.com/v1/games/multiget-place-details?placeIds={place_ids}";
+
+const GAME_MEDIA_API: &str = "https://games.roblox.com/v2/games/{universe_id}/media";
 
 #[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize)]
@@ -29,6 +32,26 @@ impl TryFrom<String> for AvatarType {
             "MorphToR6" => Ok(Self::MorphToR6),
             "MorphToR15" => Ok(Self::MorphToR15),
             "PlayerChoice" => Ok(Self::PlayerChoice),
+            _ => Err(RoboatError::MalformedResponse),
+        }
+    }
+}
+
+#[allow(missing_docs)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize)]
+pub enum GameMediaType {
+    #[default]
+    Image,
+    YouTubeVideo,
+}
+
+impl TryFrom<String> for GameMediaType {
+    type Error = RoboatError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.as_str() {
+            "Image" => Ok(Self::Image),
+            "YouTubeVideo" => Ok(Self::YouTubeVideo),
             _ => Err(RoboatError::MalformedResponse),
         }
     }
@@ -117,6 +140,19 @@ pub struct GameCreator {
     pub is_rnv_account: bool,
 
     pub has_verified_badge: bool,
+}
+
+#[allow(missing_docs)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize)]
+pub struct GameMedia {
+    pub asset_type_id: u64,
+    pub asset_type: GameMediaType,
+    pub approved: bool,
+
+    pub image_id: Option<u64>,
+    pub alt_text: Option<String>,
+    pub video_hash: Option<String>,
+    pub video_title: Option<String>,
 }
 
 impl Client {
@@ -352,5 +388,55 @@ impl Client {
         let place_details = places_details.first().ok_or(RoboatError::BadRequest)?;
 
         Ok(place_details.clone())
+    }
+
+    /// Gets places' details using <https://games.roblox.com/v2/games/{universe_id}/media>.
+    ///
+    /// # Notes
+    /// * Does not require a valid roblosecurity.
+    ///
+    /// # Errors
+    /// * All errors under [Standard Errors](#standard-errors).
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use roboat::ClientBuilder;
+    ///
+    /// const UNIVERSE_ID: u64 = 3717264063;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = ClientBuilder::new().roblosecurity(ROBLOSECURITY.to_string()).build();
+    ///
+    /// // TODO: example
+    ///
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn game_media(&self, universe_id: u64) -> Result<Vec<GameMedia>, RoboatError> {
+        let formatted_url = GAME_MEDIA_API.replace("{universe_id}", &universe_id.to_string());
+
+        let request_result = self.reqwest_client.get(formatted_url).send().await;
+
+        let response = Self::validate_request_result(request_result).await?;
+        let raw = Self::parse_to_raw::<GameMediaResponse>(response).await?;
+
+        let mut game_media_result = Vec::new();
+
+        for game_media in raw.data {
+            game_media_result.push(GameMedia {
+                asset_type_id: game_media.asset_type_id,
+                asset_type: GameMediaType::try_from(game_media.asset_type)?,
+                approved: game_media.approved,
+
+                image_id: game_media.image_id,
+                alt_text: game_media.alt_text,
+                video_hash: game_media.video_hash,
+                video_title: game_media.video_title,
+            })
+        }
+
+        Ok(game_media_result)
     }
 }

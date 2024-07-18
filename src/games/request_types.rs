@@ -82,3 +82,22 @@ pub struct PlaceDetailsRaw {
     pub universe_id: u64,
     pub universe_root_place_id: u64,
 }
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GameMediaResponse {
+    pub data: Vec<GameMediaRaw>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GameMediaRaw {
+    pub asset_type_id: u64,
+    pub asset_type: String,
+    pub approved: bool,
+
+    pub image_id: Option<u64>,
+    pub alt_text: Option<String>,
+    pub video_hash: Option<String>,
+    pub video_title: Option<String>,
+}
