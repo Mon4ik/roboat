@@ -91,7 +91,7 @@ pub struct GameMediaResponse {
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct GameMediaRaw {
+pub(super) struct GameMediaRaw {
     pub asset_type_id: u64,
     pub asset_type: String,
     pub approved: bool,
@@ -100,4 +100,26 @@ pub struct GameMediaRaw {
     pub alt_text: Option<String>,
     pub video_hash: Option<String>,
     pub video_title: Option<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, PartialOrd, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(super) struct GameServersResponse {
+    pub previous_page_cursor: Option<String>,
+    pub next_page_cursor: Option<String>,
+    pub data: Vec<GameServerRaw>,
+}
+
+#[derive(Clone, Debug, PartialEq, PartialOrd, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(super) struct GameServerRaw {
+    pub id: String,
+    pub max_players: usize,
+    pub playing: usize,
+
+    pub player_tokens: Vec<String>,
+
+    // pub players: Vec<String>,
+    pub fps: f32,
+    pub ping: u64,
 }

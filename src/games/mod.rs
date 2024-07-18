@@ -1,4 +1,6 @@
-use request_types::GameMediaResponse;
+use std::default;
+
+use request_types::{GameMediaResponse, GameServersResponse};
 use reqwest::header;
 use reqwest::header::HeaderValue;
 use serde::{Deserialize, Serialize};
@@ -13,6 +15,7 @@ const PLACE_DETAILS_API: &str =
     "https://games.roblox.com/v1/games/multiget-place-details?placeIds={place_ids}";
 
 const GAME_MEDIA_API: &str = "https://games.roblox.com/v2/games/{universe_id}/media";
+const GAME_SERVERS_API: &str = "https://games.roblox.com/v1/games/{place_id}/servers/{servers_type}?sortOrder={sort_order}&excludeFullGames={exclude_full_games}&limit=10";
 
 #[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize)]
@@ -153,6 +156,29 @@ pub struct GameMedia {
     pub alt_text: Option<String>,
     pub video_hash: Option<String>,
     pub video_title: Option<String>,
+}
+
+#[allow(missing_docs)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub enum SortOrder {
+    Ascending,
+
+    #[default]
+    Descending,
+}
+
+#[allow(missing_docs)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Default, Serialize, Deserialize)]
+pub struct GameServer {
+    pub id: String,
+    pub max_players: usize,
+    pub playing: usize,
+
+    pub player_tokens: Vec<String>,
+
+    // pub players: Vec<String>,
+    pub fps: f32,
+    pub ping: u64,
 }
 
 impl Client {
@@ -438,5 +464,90 @@ impl Client {
         }
 
         Ok(game_media_result)
+    }
+
+    /// Gets places' details using <https://games.roblox.com/v1/games/{place_id}/servers/{servers_type}>.
+    ///
+    /// # Notes
+    /// * Requires a valid roblosecurity.
+    ///
+    /// # Errors
+    /// * All errors under [Standard Errors](#standard-errors).
+    /// * All errors under [Auth Required Errors](#auth-required-errors).
+    ///
+    /// # Notes:
+    /// * Returns Vector of `GameServer` and Next page cursor
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use roboat::ClientBuilder;
+    ///
+    /// const ROBLOSECURITY: &str = "roblosecurity";
+    /// const PLACES_ID: Vec<u64> = vec![10118559731];
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = ClientBuilder::new().roblosecurity(ROBLOSECURITY.to_string()).build();
+    ///
+    /// // TODO: example
+    ///
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn game_servers(
+        &self,
+        place_id: u64,
+        sort_order: Option<SortOrder>,
+        exclude_full_games: Option<bool>,
+        cursor: Option<String>,
+    ) -> Result<(Vec<GameServer>, Option<String>), RoboatError> {
+        let sort_order = if sort_order == Some(SortOrder::Ascending) {
+            1
+        } else {
+            2
+        };
+
+        let exclude_full_games = if exclude_full_games == Some(true) {
+            "true"
+        } else {
+            "false"
+        };
+
+        let cookie_string = self.cookie_string().unwrap_or(HeaderValue::from_static(""));
+        let mut formatted_url = GAME_SERVERS_API
+            .replace("{place_id}", &place_id.to_string())
+            .replace("{servers_type}", "0")
+            .replace("{sort_order}", &sort_order.to_string())
+            .replace("{exclude_full_games}", exclude_full_games);
+
+        if let Some(cursor) = cursor {
+            formatted_url = format!("{}&cursor={}", formatted_url, cursor);
+        }
+
+        let request_result = self
+            .reqwest_client
+            .get(formatted_url)
+            .header(header::COOKIE, cookie_string)
+            .send()
+            .await;
+
+        let response = Self::validate_request_result(request_result).await?;
+        let raw = Self::parse_to_raw::<GameServersResponse>(response).await?;
+
+        let mut game_servers = Vec::new();
+
+        for game_server in raw.data {
+            game_servers.push(GameServer {
+                id: game_server.id,
+                max_players: game_server.max_players,
+                playing: game_server.playing,
+                player_tokens: game_server.player_tokens,
+                fps: game_server.fps,
+                ping: game_server.ping,
+            })
+        }
+
+        Ok((game_servers, raw.next_page_cursor))
     }
 }
