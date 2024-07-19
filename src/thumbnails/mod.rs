@@ -343,6 +343,7 @@ impl Client {
                 "requestId": generate_request_id_string(thumbnail_type, 0, token.clone(), size),
                 "type": generate_thumbnail_type_string(thumbnail_type),
                 "targetId": 0,
+                "token": token.clone(),
                 "format": generate_format(thumbnail_type),
                 "size": size.to_string(),
             }));
