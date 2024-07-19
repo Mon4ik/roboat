@@ -154,9 +154,13 @@ mod internal {
             let mut topics = Vec::new();
 
             for raw_topic in raw.sorts {
+                if raw_topic.recommendation_list.is_none() {
+                    continue;
+                }
+
                 let mut recommendation_list = Vec::new();
 
-                for raw_recommend in raw_topic.recommendation_list {
+                for raw_recommend in raw_topic.recommendation_list.unwrap() {
                     let metadata = raw
                         .content_metadata
                         .game

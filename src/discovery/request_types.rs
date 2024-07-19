@@ -31,7 +31,7 @@ pub struct RecommendationsTopicRaw {
     pub treatment_type: String,
 
     /// Array of recommendations
-    pub recommendation_list: Vec<RecommendationRaw>,
+    pub recommendation_list: Option<Vec<RecommendationRaw>>,
 
     // pub next_page_token_for_topic: null,
     pub number_of_rows: i32,

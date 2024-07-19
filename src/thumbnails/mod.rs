@@ -185,7 +185,7 @@ impl Client {
         let mut raw =
             Self::parse_to_raw::<request_types::AssetThumbnailUrlResponse>(response).await?;
 
-        sort_url_datas_by_argument_order(&mut raw.data, &ids);
+        sort_url_datas_by_id_argument_order(&mut raw.data, &ids);
 
         let mut urls = Vec::new();
 
@@ -359,9 +359,10 @@ impl Client {
             .await;
 
         let response = Self::validate_request_result(request_result).await?;
-        let raw = Self::parse_to_raw::<request_types::AssetThumbnailUrlResponse>(response).await?;
+        let mut raw =
+            Self::parse_to_raw::<request_types::AssetThumbnailUrlResponse>(response).await?;
 
-        // sort_url_datas_by_argument_order(&mut raw.data, &tokens);
+        sort_url_datas_by_token_argument_order(&mut raw.data, &tokens);
 
         let mut urls = Vec::new();
 
@@ -445,7 +446,7 @@ impl Client {
 }
 
 /// Makes sure that the url datas are in the same order as the arguments.
-fn sort_url_datas_by_argument_order(
+fn sort_url_datas_by_id_argument_order(
     url_datas: &mut [request_types::AssetThumbnailUrlDataRaw],
     arguments: &[u64],
 ) {
@@ -458,6 +459,34 @@ fn sort_url_datas_by_argument_order(
         let b_index = arguments
             .iter()
             .position(|id| *id == b.target_id as u64)
+            .unwrap_or(usize::MAX);
+
+        a_index.cmp(&b_index)
+    });
+}
+
+/// Makes sure that the url datas are in the same order as the arguments.
+fn sort_url_datas_by_token_argument_order(
+    url_datas: &mut [request_types::AssetThumbnailUrlDataRaw],
+    arguments: &[String],
+) {
+    url_datas.sort_by(|a, b| {
+        let a_index = arguments
+            .iter()
+            .position(|token| {
+                let a_request_id_tokens: Vec<&str> = a.request_id.split(":").collect();
+
+                token == a_request_id_tokens[1]
+            })
+            .unwrap_or(usize::MAX);
+
+        let b_index = arguments
+            .iter()
+            .position(|token| {
+                let b_request_id_tokens: Vec<&str> = b.request_id.split(":").collect();
+
+                token == b_request_id_tokens[1]
+            })
             .unwrap_or(usize::MAX);
 
         a_index.cmp(&b_index)
