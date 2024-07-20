@@ -159,7 +159,7 @@ pub struct GameMedia {
 }
 
 #[allow(missing_docs)]
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize)]
 pub enum ServerType {
     #[default]
     Public,
@@ -167,7 +167,7 @@ pub enum ServerType {
 }
 
 #[allow(missing_docs)]
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize)]
 pub enum SortOrder {
     Ascending,
 
