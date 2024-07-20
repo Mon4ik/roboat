@@ -12,7 +12,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
     let client = ClientBuilder::new().build();
 
-    let (game_servers, next_cursor) = client.game_servers(args.place_id, None, None, None).await?;
+    let (game_servers, next_cursor) = client
+        .game_servers(args.place_id, None, None, None, None)
+        .await?;
 
     for game_server in game_servers {
         println!("Server \"{}\"", game_server.id);

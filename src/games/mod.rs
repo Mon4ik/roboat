@@ -160,6 +160,14 @@ pub struct GameMedia {
 
 #[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub enum ServerType {
+    #[default]
+    Public,
+    Friends,
+}
+
+#[allow(missing_docs)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum SortOrder {
     Ascending,
 
@@ -498,17 +506,24 @@ impl Client {
     pub async fn game_servers(
         &self,
         place_id: u64,
+        servers_type: Option<ServerType>,
         sort_order: Option<SortOrder>,
         exclude_full_games: Option<bool>,
         cursor: Option<String>,
     ) -> Result<(Vec<GameServer>, Option<String>), RoboatError> {
-        let sort_order = if sort_order == Some(SortOrder::Ascending) {
+        let servers_type = if servers_type.unwrap_or_default() == ServerType::Public {
+            "0"
+        } else {
+            "1"
+        };
+
+        let sort_order = if sort_order.unwrap_or_default() == SortOrder::Ascending {
             1
         } else {
             2
         };
 
-        let exclude_full_games = if exclude_full_games == Some(true) {
+        let exclude_full_games = if exclude_full_games.unwrap_or(false) {
             "true"
         } else {
             "false"
@@ -517,7 +532,7 @@ impl Client {
         let cookie_string = self.cookie_string().unwrap_or(HeaderValue::from_static(""));
         let mut formatted_url = GAME_SERVERS_API
             .replace("{place_id}", &place_id.to_string())
-            .replace("{servers_type}", "0")
+            .replace("{servers_type}", servers_type)
             .replace("{sort_order}", &sort_order.to_string())
             .replace("{exclude_full_games}", exclude_full_games);
 
